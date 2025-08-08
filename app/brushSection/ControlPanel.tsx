@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 
 interface ControlPanelProps {
-    onUpload: (e: any) => void;
+    onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
     size: number;
     onSizeChange: (value: number) => void;
     rotation: number;

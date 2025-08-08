@@ -72,8 +72,10 @@ export default function BrushScreen() {
         };
     }, []);
 
-    const handleUpload = (e: any) => {
-        const file = e.target.files[0];
+    const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
         const reader = new FileReader();
         reader.onload = () => {
             const image = new Image();
@@ -83,7 +85,7 @@ export default function BrushScreen() {
         reader.readAsDataURL(file);
     };
 
-    const draw = (e: any) => {
+    const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
         if (!drawing || !img) return;
 
         const currentTime = Date.now();
