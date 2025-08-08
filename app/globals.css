@@ -1,26 +1,79 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+    --background: #ffffff;
+    --foreground: #171717;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+    :root {
+        --background: #0a0a0a;
+        --foreground: #ededed;
+    }
+}
+
+html {
+    font-size: 16px;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Custom Range Slider Styles */
+.slider {
+    background: linear-gradient(
+        to right,
+        #72ff65 0%,
+        #72ff65 50%,
+        #000000 50%,
+        #000000 100%
+    );
+    border-radius: 8px;
+    outline: none;
+    transition: background 0.2s ease;
+}
+
+.slider::-webkit-slider-thumb {
+    appearance: none;
+    height: 0.8rem;
+    width: 0.8rem;
+    border-radius: 50%;
+    background: #72ff65;
+    cursor: pointer;
+    border: 1px solid #000;
+}
+
+.slider::-moz-range-thumb {
+    height: 0.8rem;
+    width: 0.8rem;
+    border-radius: 50%;
+    background: #72ff65;
+    cursor: pointer;
+    border: 1px solid #000;
+}
+
+.slider::-webkit-slider-track {
+    background: transparent;
+}
+
+.slider::-moz-range-track {
+    background: transparent;
+}
+
+.controls {
+    background-color: rgba(255, 255, 255, 0.5);
+    width: fit-content;
+    backdrop-filter: blur(10px);
+    padding: 16px;
+    border: 1px solid rgba(0, 0, 0, 1);
 }
