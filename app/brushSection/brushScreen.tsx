@@ -28,10 +28,41 @@ export default function BrushScreen() {
     const [isTransparent, setIsTransparent] = useState(false);
     const [isClient, setIsClient] = useState(false);
 
+    // 마우스 속도 계산을 위한 상태
+    const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
+    const [lastMouseTime, setLastMouseTime] = useState(0);
+
+    // 커서 미리보기용 상태
+    const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
+    const [showCursor, setShowCursor] = useState(false);
+    const [cursorImageData, setCursorImageData] = useState<string>('');
+
     // 클라이언트 사이드에서만 실행
     useEffect(() => {
         setIsClient(true);
     }, []);
+
+    // cursorCanvasRef가 설정되었는지 확인
+    useEffect(() => {
+        console.log('커서 미리보기 상태 확인:', {
+            img: !!img,
+        });
+    }, [img]);
+
+    // 설정이 변경될 때마다 커서 미리보기 업데이트
+    useEffect(() => {
+        console.log('설정 변경 useEffect:', {
+            img: !!img,
+            showCursor,
+            cursorPos,
+            size,
+            rotation,
+        });
+
+        if (img && showCursor) {
+            updateCursorPreview(cursorPos.x, cursorPos.y);
+        }
+    }, [size, rotation, randomness, img, showCursor]);
 
     const handleCanvasTypeChange = (type: CanvasType) => {
         if (type === 'fullscreen' && isClient) {
@@ -110,6 +141,102 @@ export default function BrushScreen() {
         };
     }, []);
 
+    const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+        setDrawing(true);
+        // 마우스 다운 시 초기 위치 설정
+        setLastMousePos({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
+        setLastMouseTime(Date.now());
+    };
+
+    // 커서 미리보기 업데이트 함수
+    const updateCursorPreview = (x: number, y: number) => {
+        console.log('updateCursorPreview 호출:', {
+            img: !!img,
+            x,
+            y,
+        });
+
+        if (!img) {
+            console.log('이미지가 없음');
+            return;
+        }
+
+        try {
+            // 임시 캔버스를 생성하여 이미지 데이터 생성
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d')!;
+
+            // 마우스 속도에 따른 크기 계산 (부드러운 변화)
+            let speedMultiplier = 1;
+            if (lastMouseTime > 0) {
+                const currentTime = Date.now();
+                const timeDiff = currentTime - lastMouseTime;
+                const distance = Math.sqrt(
+                    Math.pow(x - lastMousePos.x, 2) +
+                        Math.pow(y - lastMousePos.y, 2)
+                );
+                const speed = distance / timeDiff;
+
+                // 속도가 0.1 픽셀/밀리초부터 점진적으로 증가
+                if (speed > 0.1) {
+                    const normalizedSpeed = Math.min((speed - 0.1) / 2.0, 1.0);
+                    const easeOutSpeed = 1 - Math.pow(1 - normalizedSpeed, 3);
+                    speedMultiplier = 1 + easeOutSpeed * 1.5;
+                }
+            }
+
+            // 커서 캔버스 크기 설정 (속도가 적용된 이미지 크기보다 약간 크게)
+            const previewSize = Math.max(size * speedMultiplier * 2, 100);
+            tempCanvas.width = previewSize;
+            tempCanvas.height = previewSize;
+
+            // 배경을 투명하게
+            tempCtx.clearRect(0, 0, previewSize, previewSize);
+
+            // 이미지 그리기 (중앙에 위치)
+            const centerX = previewSize / 2;
+            const centerY = previewSize / 2;
+
+            tempCtx.save();
+            tempCtx.translate(centerX, centerY);
+            tempCtx.rotate(rotation);
+
+            // 속도가 적용된 크기로 그리기
+            const displaySize = size * speedMultiplier;
+            tempCtx.drawImage(
+                img,
+                -displaySize / 2,
+                -displaySize / 2,
+                displaySize,
+                displaySize
+            );
+
+            tempCtx.restore();
+
+            // 이미지 데이터를 base64로 변환하여 저장
+            const imageData = tempCanvas.toDataURL('image/png');
+            setCursorImageData(imageData);
+
+            // 랜덤함이 적용된 실제 그려질 위치 계산
+            const randomX = x + (Math.random() - 0.5) * randomness * 100;
+            const randomY = y + (Math.random() - 0.5) * randomness * 100;
+
+            // 커서 위치와 표시 상태를 즉시 업데이트
+            setCursorPos({ x: randomX, y: randomY });
+            setShowCursor(true);
+
+            console.log('커서 미리보기 성공:', {
+                x: randomX,
+                y: randomY,
+                size: displaySize,
+                rotation,
+                speedMultiplier,
+            });
+        } catch (error) {
+            console.error('커서 미리보기 그리기 중 에러:', error);
+        }
+    };
+
     const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -131,16 +258,38 @@ export default function BrushScreen() {
 
         const canvas = canvasRef.current!;
         const ctx = canvas.getContext('2d')!;
-        const x = e.nativeEvent.offsetX;
-        const y = e.nativeEvent.offsetY;
+        const currentX = e.nativeEvent.offsetX;
+        const currentY = e.nativeEvent.offsetY;
+        const currentTime2 = Date.now();
+
+        // 마우스 속도 계산
+        let speedMultiplier = 1;
+        if (lastMouseTime > 0) {
+            const timeDiff = currentTime2 - lastMouseTime;
+            const distance = Math.sqrt(
+                Math.pow(currentX - lastMousePos.x, 2) +
+                    Math.pow(currentY - lastMousePos.y, 2)
+            );
+            const speed = distance / timeDiff; // 픽셀/밀리초
+
+            // 속도에 따른 크기 조정을 더 부드럽게 개선
+            // 속도가 0.1 픽셀/밀리초부터 점진적으로 증가
+            if (speed > 0.1) {
+                // 부드러운 곡선 함수 사용 (ease-out 효과)
+                const normalizedSpeed = Math.min((speed - 0.1) / 2.0, 1.0); // 0~1 범위로 정규화
+                const easeOutSpeed = 1 - Math.pow(1 - normalizedSpeed, 3); // cubic ease-out
+                speedMultiplier = 1 + easeOutSpeed * 1.5; // 최대 2.5배까지 부드럽게 증가
+            }
+        }
 
         // 위치에 랜덤함 추가
-        const randomX = x + (Math.random() - 0.5) * randomness * 100;
-        const randomY = y + (Math.random() - 0.5) * randomness * 100;
+        const randomX = currentX + (Math.random() - 0.5) * randomness * 100;
+        const randomY = currentY + (Math.random() - 0.5) * randomness * 100;
 
         // 회전은 회전 값에만 영향받음
         const r = rotation;
-        const s = size * (1 + (Math.random() - 0.5) * 0.1); // 크기 랜덤함을 고정값으로 변경
+        // 크기에 속도 배수와 랜덤함 적용
+        const s = size * speedMultiplier * (1 + (Math.random() - 0.5) * 0.1);
 
         ctx.save();
         ctx.translate(randomX, randomY);
@@ -153,7 +302,40 @@ export default function BrushScreen() {
 
         ctx.restore();
 
+        // 마우스 위치와 시간 업데이트
+        setLastMousePos({ x: currentX, y: currentY });
+        setLastMouseTime(currentTime2);
         setLastDrawTime(currentTime);
+    };
+
+    // 마우스 움직임 추적 (그리기와 관계없이)
+    const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+        console.log('handleMouseMove 호출:', {
+            img: !!img,
+            drawing,
+            clientX: e.clientX,
+            clientY: e.clientY,
+        });
+
+        if (img) {
+            // 마우스 위치를 전역 좌표로 변환
+            const rect = e.currentTarget.getBoundingClientRect();
+            const globalX = e.clientX;
+            const globalY = e.clientY;
+
+            console.log('마우스 움직임:', { globalX, globalY, img: !!img });
+
+            updateCursorPreview(globalX, globalY);
+
+            // 그리기 중일 때만 실제 그리기 실행
+            if (drawing) {
+                draw(e);
+            }
+        } else {
+            console.log(
+                '이미지가 없거나 커서 캔버스 ref가 없어서 커서 미리보기 업데이트 안함'
+            );
+        }
     };
 
     const saveImage = () => {
@@ -226,12 +408,29 @@ export default function BrushScreen() {
             >
                 <canvas
                     ref={canvasRef}
-                    onMouseDown={() => setDrawing(true)}
-                    onMouseMove={draw}
+                    onMouseDown={handleCanvasMouseDown}
+                    onMouseMove={handleMouseMove}
                     onMouseUp={() => setDrawing(false)}
+                    onMouseLeave={() => setShowCursor(false)}
                     style={{ cursor: 'crosshair' }}
                 />
             </div>
+
+            {/* 커서 미리보기 */}
+            {showCursor && img && cursorImageData && (
+                <img
+                    src={cursorImageData}
+                    className="fixed pointer-events-none z-[9999] border border-red-500"
+                    style={{
+                        left: cursorPos.x,
+                        top: cursorPos.y,
+                        transform: 'translate(-50%, -50%)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    }}
+                    alt="커서 미리보기"
+                />
+            )}
+
             <SelectCanvas
                 onUpload={handleUpload}
                 size={size}
