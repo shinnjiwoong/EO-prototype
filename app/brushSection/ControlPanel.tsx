@@ -81,52 +81,79 @@ export default function ControlPanel({
             <div className="flex flex-col gap-8">
                 <div className="flex flex-col gap-4 w-full">
                     <label className="text-black">Size</label>
-                    <input
-                        type="range"
-                        min={10}
-                        max={200}
-                        value={size}
-                        onChange={(e) => onSizeChange(+e.target.value)}
-                        className="w-full h-[1px] bg-black rounded-lg appearance-none cursor-pointer slider"
-                    />
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="range"
+                            min={10}
+                            max={200}
+                            value={size}
+                            onChange={(e) => onSizeChange(+e.target.value)}
+                            className="flex-1 h-[1px] bg-black rounded-lg appearance-none cursor-pointer slider"
+                        />
+                        <span className="text-black text-sm min-w-[3rem] text-right">
+                            {Math.round(((size - 10) / (200 - 10)) * 100)}%
+                        </span>
+                    </div>
                 </div>
 
                 <div className="flex flex-col gap-4 w-full">
                     <label className="text-black">Rotation</label>
-                    <input
-                        type="range"
-                        min={0}
-                        max={6.28}
-                        step={0.01}
-                        value={rotation}
-                        onChange={(e) => onRotationChange(+e.target.value)}
-                        className="w-full h-[1px] bg-black rounded-lg appearance-none cursor-pointer slider"
-                    />
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="range"
+                            min={0}
+                            max={6.28}
+                            step={0.01}
+                            value={rotation}
+                            onChange={(e) => onRotationChange(+e.target.value)}
+                            className="flex-1 h-[1px] bg-black rounded-lg appearance-none cursor-pointer slider"
+                        />
+                        <span className="text-black text-sm min-w-[3rem] text-right">
+                            {Math.round((rotation / 6.28) * 100)}%
+                        </span>
+                    </div>
                 </div>
 
                 <div className="flex flex-col gap-4 w-full">
                     <label className="text-black">Randomness</label>
-                    <input
-                        type="range"
-                        min={0}
-                        max={1}
-                        step={0.01}
-                        value={randomness}
-                        onChange={(e) => onRandomnessChange(+e.target.value)}
-                        className="w-full h-[1px] bg-black rounded-lg appearance-none cursor-pointer slider"
-                    />
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="range"
+                            min={0}
+                            max={1}
+                            step={0.01}
+                            value={randomness}
+                            onChange={(e) =>
+                                onRandomnessChange(+e.target.value)
+                            }
+                            className="flex-1 h-[1px] bg-black rounded-lg appearance-none cursor-pointer slider"
+                        />
+                        <span className="text-black text-sm min-w-[3rem] text-right">
+                            {Math.round(randomness * 100)}%
+                        </span>
+                    </div>
                 </div>
 
                 <div className="flex flex-col gap-4 w-full">
                     <label className="text-black">Draw Interval (ms)</label>
-                    <input
-                        type="range"
-                        min={10}
-                        max={200}
-                        value={drawInterval}
-                        onChange={(e) => onDrawIntervalChange(+e.target.value)}
-                        className="w-full h-[1px] bg-black rounded-lg appearance-none cursor-pointer slider"
-                    />
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="range"
+                            min={10}
+                            max={200}
+                            value={drawInterval}
+                            onChange={(e) =>
+                                onDrawIntervalChange(+e.target.value)
+                            }
+                            className="flex-1 h-[1px] bg-black rounded-lg appearance-none cursor-pointer slider"
+                        />
+                        <span className="text-black text-sm min-w-[3rem] text-right">
+                            {Math.round(
+                                ((200 - drawInterval) / (200 - 10)) * 100
+                            )}
+                            %
+                        </span>
+                    </div>
                     <span className="text-black">{drawInterval}ms</span>
                 </div>
 
