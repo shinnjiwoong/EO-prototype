@@ -166,27 +166,8 @@ export default function BrushScreen() {
             const tempCanvas = document.createElement('canvas');
             const tempCtx = tempCanvas.getContext('2d')!;
 
-            // 마우스 속도에 따른 크기 계산 (부드러운 변화)
-            let speedMultiplier = 1;
-            if (lastMouseTime > 0) {
-                const currentTime = Date.now();
-                const timeDiff = currentTime - lastMouseTime;
-                const distance = Math.sqrt(
-                    Math.pow(x - lastMousePos.x, 2) +
-                        Math.pow(y - lastMousePos.y, 2)
-                );
-                const speed = distance / timeDiff;
-
-                // 속도가 0.1 픽셀/밀리초부터 점진적으로 증가
-                if (speed > 0.1) {
-                    const normalizedSpeed = Math.min((speed - 0.1) / 2.0, 1.0);
-                    const easeOutSpeed = 1 - Math.pow(1 - normalizedSpeed, 3);
-                    speedMultiplier = 1 + easeOutSpeed * 1.5;
-                }
-            }
-
-            // 커서 캔버스 크기 설정 (속도가 적용된 이미지 크기보다 약간 크게)
-            const previewSize = Math.max(size * speedMultiplier * 2, 100);
+            // 커서 캔버스 크기 설정 (기본 설정된 크기로만)
+            const previewSize = Math.max(size * 2, 100);
             tempCanvas.width = previewSize;
             tempCanvas.height = previewSize;
 
@@ -201,15 +182,8 @@ export default function BrushScreen() {
             tempCtx.translate(centerX, centerY);
             tempCtx.rotate(rotation);
 
-            // 속도가 적용된 크기로 그리기
-            const displaySize = size * speedMultiplier;
-            tempCtx.drawImage(
-                img,
-                -displaySize / 2,
-                -displaySize / 2,
-                displaySize,
-                displaySize
-            );
+            // 기본 설정된 크기로 그리기 (속도 반응 없음)
+            tempCtx.drawImage(img, -size / 2, -size / 2, size, size);
 
             tempCtx.restore();
 
@@ -217,21 +191,11 @@ export default function BrushScreen() {
             const imageData = tempCanvas.toDataURL('image/png');
             setCursorImageData(imageData);
 
-            // 랜덤함이 적용된 실제 그려질 위치 계산
-            const randomX = x + (Math.random() - 0.5) * randomness * 100;
-            const randomY = y + (Math.random() - 0.5) * randomness * 100;
-
-            // 커서 위치와 표시 상태를 즉시 업데이트
-            setCursorPos({ x: randomX, y: randomY });
+            // 랜덤함 없이 마우스 위치 그대로 사용 (미리보기는 고정된 위치)
+            setCursorPos({ x, y });
             setShowCursor(true);
 
-            console.log('커서 미리보기 성공:', {
-                x: randomX,
-                y: randomY,
-                size: displaySize,
-                rotation,
-                speedMultiplier,
-            });
+            console.log('커서 미리보기 성공:', { x, y, size, rotation });
         } catch (error) {
             console.error('커서 미리보기 그리기 중 에러:', error);
         }
