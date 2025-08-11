@@ -16,6 +16,10 @@ interface ControlPanelProps {
     onClearCanvas: () => void;
     showPanel: boolean;
     setShowPanel: (show: boolean) => void;
+    backgroundColor: string;
+    onBackgroundColorChange: (color: string) => void;
+    isTransparent: boolean;
+    onTransparentChange: (transparent: boolean) => void;
 }
 
 export default function ControlPanel({
@@ -32,6 +36,10 @@ export default function ControlPanel({
     onClearCanvas,
     showPanel,
     setShowPanel,
+    backgroundColor,
+    onBackgroundColorChange,
+    isTransparent,
+    onTransparentChange,
 }: ControlPanelProps) {
     const updateSliderBackground = (element: HTMLInputElement) => {
         const min = parseFloat(element.min);
@@ -67,7 +75,9 @@ export default function ControlPanel({
                 showPanel ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}
         >
-            <h2 className="text-black text-[1.2rem]">Brush Controls</h2>
+            <h2 className="text-black text-[1.2rem] leading-[1]">
+                Brush Controls
+            </h2>
             <div className="flex flex-col gap-8">
                 <div className="flex flex-col gap-4 w-full">
                     <label className="text-black">Size</label>
@@ -118,6 +128,37 @@ export default function ControlPanel({
                         className="w-full h-[1px] bg-black rounded-lg appearance-none cursor-pointer slider"
                     />
                     <span className="text-black">{drawInterval}ms</span>
+                </div>
+
+                <div className="flex flex-col gap-4 w-full">
+                    <label className="text-black">Background</label>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            id="transparent"
+                            checked={isTransparent}
+                            onChange={(e) =>
+                                onTransparentChange(e.target.checked)
+                            }
+                            className="w-4 h-4"
+                        />
+                        <label
+                            htmlFor="transparent"
+                            className="text-black text-sm"
+                        >
+                            Transparent Background
+                        </label>
+                    </div>
+                    {!isTransparent && (
+                        <input
+                            type="color"
+                            value={backgroundColor}
+                            onChange={(e) =>
+                                onBackgroundColorChange(e.target.value)
+                            }
+                            className="w-full h-8 border border-black"
+                        />
+                    )}
                 </div>
             </div>
 

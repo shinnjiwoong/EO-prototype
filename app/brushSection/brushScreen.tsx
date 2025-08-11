@@ -2,6 +2,15 @@
 
 import { useRef, useState, useEffect } from 'react';
 import ControlPanel from './ControlPanel';
+import SelectCanvas, { CanvasType } from '../SelectCanvas';
+
+const CANVAS_SIZES: Record<CanvasType, { width: number; height: number }> = {
+    poster: { width: 800, height: 1200 },
+    pc: { width: 1200, height: 800 },
+    mobile: { width: 400, height: 800 },
+    square: { width: 800, height: 800 },
+    fullscreen: { width: window.innerWidth, height: window.innerHeight },
+};
 
 export default function BrushScreen() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -13,29 +22,44 @@ export default function BrushScreen() {
     const [lastDrawTime, setLastDrawTime] = useState(0);
     const [drawInterval, setDrawInterval] = useState(50); // 그리기 간격 (ms)
     const [showPanel, setShowPanel] = useState(true);
+    const [canvasType, setCanvasType] = useState<CanvasType>('pc');
+    const [canvasSize, setCanvasSize] = useState(CANVAS_SIZES.pc);
+    const [backgroundColor, setBackgroundColor] = useState('#ffffff');
+    const [isTransparent, setIsTransparent] = useState(false);
+
+    const handleCanvasTypeChange = (type: CanvasType) => {
+        setCanvasType(type);
+        setCanvasSize(CANVAS_SIZES[type]);
+    };
 
     useEffect(() => {
         const canvas = canvasRef.current;
         if (canvas) {
             const ctx = canvas.getContext('2d')!;
             const dpr = window.devicePixelRatio || 1;
-            const rect = canvas.getBoundingClientRect();
 
             // 캔버스의 CSS 크기 설정
-            canvas.style.width = window.innerWidth + 'px';
-            canvas.style.height = window.innerHeight + 'px';
+            canvas.style.width = canvasSize.width + 'px';
+            canvas.style.height = canvasSize.height + 'px';
 
             // 캔버스의 실제 크기 설정 (DPI 고려)
-            canvas.width = window.innerWidth * dpr;
-            canvas.height = window.innerHeight * dpr;
+            canvas.width = canvasSize.width * dpr;
+            canvas.height = canvasSize.height * dpr;
 
             // 컨텍스트 스케일 조정
             ctx.scale(dpr, dpr);
 
             // 이미지 스무딩 비활성화 (선명한 픽셀 아트를 위해)
             ctx.imageSmoothingEnabled = false;
+
+            // 캔버스 초기화 (배경 설정에 따라)
+            if (!isTransparent) {
+                ctx.fillStyle = backgroundColor;
+                ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
+            }
         }
-    }, []);
+    }, [canvasSize, backgroundColor, isTransparent]);
+
     useEffect(() => {
         const handleMouseDown = (e: MouseEvent) => {
             // 캔버스가 아닌 컨트롤 패널 요소를 클릭한 경우 무시
@@ -120,26 +144,88 @@ export default function BrushScreen() {
 
     const saveImage = () => {
         const canvas = canvasRef.current!;
+        const dpr = window.devicePixelRatio || 1;
+
+        // 고해상도 이미지를 위한 임시 캔버스 생성
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d')!;
+
+        // 임시 캔버스 크기 설정 (고해상도)
+        tempCanvas.width = canvasSize.width * dpr;
+        tempCanvas.height = canvasSize.height * dpr;
+
+        // 투명 배경이 아닌 경우 배경색 설정
+        if (!isTransparent) {
+            tempCtx.fillStyle = backgroundColor;
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+        }
+
+        // 원본 캔버스의 내용을 임시 캔버스에 복사
+        tempCtx.drawImage(canvas, 0, 0);
+
+        // 고해상도 이미지로 저장
         const link = document.createElement('a');
         link.download = 'drawing.png';
-        link.href = canvas.toDataURL('image/png');
+        link.href = tempCanvas.toDataURL('image/png');
         link.click();
     };
 
     const clearCanvas = () => {
         const canvas = canvasRef.current!;
         const ctx = canvas.getContext('2d')!;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const dpr = window.devicePixelRatio || 1;
+
+        // 캔버스 초기화 (배경 설정에 따라)
+        if (!isTransparent) {
+            ctx.fillStyle = backgroundColor;
+            ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
+        } else {
+            ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
+        }
     };
 
     return (
-        <div>
-            <canvas
-                ref={canvasRef}
-                onMouseDown={() => setDrawing(true)}
-                onMouseMove={draw}
-                onMouseUp={() => setDrawing(false)}
-                style={{ cursor: 'crosshair' }}
+        <div
+            className={`${
+                canvasType === 'fullscreen'
+                    ? 'p-0'
+                    : 'flex items-center justify-center min-h-screen bg-gray-100 p-8'
+            }`}
+        >
+            <div
+                className={`${
+                    canvasType === 'fullscreen'
+                        ? 'w-full h-screen'
+                        : 'relative bg-white shadow-lg'
+                }`}
+                style={{
+                    width:
+                        canvasType === 'fullscreen'
+                            ? '100vw'
+                            : canvasSize.width,
+                    height:
+                        canvasType === 'fullscreen'
+                            ? '100vh'
+                            : canvasSize.height,
+                    transition: 'width 0.3s ease, height 0.3s ease',
+                }}
+            >
+                <canvas
+                    ref={canvasRef}
+                    onMouseDown={() => setDrawing(true)}
+                    onMouseMove={draw}
+                    onMouseUp={() => setDrawing(false)}
+                    style={{ cursor: 'crosshair' }}
+                />
+            </div>
+            <SelectCanvas
+                onUpload={handleUpload}
+                size={size}
+                onSizeChange={setSize}
+                rotation={rotation}
+                onRotationChange={setRotation}
+                canvasType={canvasType}
+                onCanvasTypeChange={handleCanvasTypeChange}
             />
             <ControlPanel
                 onUpload={handleUpload}
@@ -155,6 +241,10 @@ export default function BrushScreen() {
                 onClearCanvas={clearCanvas}
                 showPanel={showPanel}
                 setShowPanel={setShowPanel}
+                backgroundColor={backgroundColor}
+                onBackgroundColorChange={setBackgroundColor}
+                isTransparent={isTransparent}
+                onTransparentChange={setIsTransparent}
             />
         </div>
     );
