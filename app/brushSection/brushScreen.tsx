@@ -9,7 +9,7 @@ const CANVAS_SIZES: Record<CanvasType, { width: number; height: number }> = {
     pc: { width: 1200, height: 800 },
     mobile: { width: 400, height: 800 },
     square: { width: 800, height: 800 },
-    fullscreen: { width: window.innerWidth, height: window.innerHeight },
+    fullscreen: { width: 0, height: 0 }, // 초기값은 0으로 설정
 };
 
 export default function BrushScreen() {
@@ -26,10 +26,24 @@ export default function BrushScreen() {
     const [canvasSize, setCanvasSize] = useState(CANVAS_SIZES.pc);
     const [backgroundColor, setBackgroundColor] = useState('#ffffff');
     const [isTransparent, setIsTransparent] = useState(false);
+    const [isClient, setIsClient] = useState(false);
+
+    // 클라이언트 사이드에서만 실행
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     const handleCanvasTypeChange = (type: CanvasType) => {
+        if (type === 'fullscreen' && isClient) {
+            // fullscreen일 때만 window 크기 사용
+            setCanvasSize({
+                width: window.innerWidth,
+                height: window.innerHeight,
+            });
+        } else {
+            setCanvasSize(CANVAS_SIZES[type]);
+        }
         setCanvasType(type);
-        setCanvasSize(CANVAS_SIZES[type]);
     };
 
     useEffect(() => {

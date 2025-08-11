@@ -1,5 +1,7 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+
 export type CanvasType = 'poster' | 'pc' | 'mobile' | 'square' | 'fullscreen';
 
 interface CanvasSize {
@@ -12,7 +14,7 @@ const CANVAS_SIZES: Record<CanvasType, CanvasSize> = {
     pc: { width: 1200, height: 800 },
     mobile: { width: 400, height: 800 },
     square: { width: 800, height: 800 },
-    fullscreen: { width: window.innerWidth, height: window.innerHeight },
+    fullscreen: { width: 0, height: 0 }, // 초기값은 0으로 설정
 };
 
 interface SelectCanvasProps {
@@ -34,6 +36,13 @@ export default function SelectCanvas({
     canvasType,
     onCanvasTypeChange,
 }: SelectCanvasProps) {
+    const [isClient, setIsClient] = useState(false);
+
+    // 클라이언트 사이드에서만 실행
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
     return (
         <div className="fixed top-[16px] right-[16px] flex flex-col gap-4">
             <div className="flex flex-col gap-2">
