@@ -18,15 +18,19 @@ export default function BrushScreen() {
     const [drawing, setDrawing] = useState(false);
     const [size, setSize] = useState(50);
     const [rotation, setRotation] = useState(0);
-    const [randomness, setRandomness] = useState(0.2);
+    const [randomness, setRandomness] = useState(0); // 0%로 시작 (랜덤함 없음)
     const [lastDrawTime, setLastDrawTime] = useState(0);
-    const [drawInterval, setDrawInterval] = useState(50); // 그리기 간격 (ms)
+    const [drawInterval, setDrawInterval] = useState(5); // 5ms로 시작 (더 빠름)
     const [showPanel, setShowPanel] = useState(true);
     const [canvasType, setCanvasType] = useState<CanvasType>('pc');
     const [canvasSize, setCanvasSize] = useState(CANVAS_SIZES.pc);
     const [backgroundColor, setBackgroundColor] = useState('#ffffff');
     const [isTransparent, setIsTransparent] = useState(false);
     const [isClient, setIsClient] = useState(false);
+
+    // 이미지 비율 조절을 위한 상태
+    const [imageWidthRatio, setImageWidthRatio] = useState(100); // 가로 비율 (100% = 원본)
+    const [imageHeightRatio, setImageHeightRatio] = useState(100); // 세로 비율 (100% = 원본)
 
     // 마우스 속도 계산을 위한 상태
     const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
@@ -182,8 +186,16 @@ export default function BrushScreen() {
             tempCtx.translate(centerX, centerY);
             tempCtx.rotate(rotation);
 
-            // 기본 설정된 크기로 그리기 (속도 반응 없음)
-            tempCtx.drawImage(img, -size / 2, -size / 2, size, size);
+            // 기본 설정된 크기로 그리기 (속도 반응 없음, 비율 적용)
+            const scaledWidth = size * (imageWidthRatio / 100);
+            const scaledHeight = size * (imageHeightRatio / 100);
+            tempCtx.drawImage(
+                img,
+                -scaledWidth / 2,
+                -scaledHeight / 2,
+                scaledWidth,
+                scaledHeight
+            );
 
             tempCtx.restore();
 
@@ -260,8 +272,16 @@ export default function BrushScreen() {
         ctx.rotate(r);
 
         if (img) {
-            // 일반 이미지 그리기
-            ctx.drawImage(img, -s / 2, -s / 2, s, s);
+            // 일반 이미지 그리기 (비율 적용)
+            const scaledWidth = s * (imageWidthRatio / 100);
+            const scaledHeight = s * (imageHeightRatio / 100);
+            ctx.drawImage(
+                img,
+                -scaledWidth / 2,
+                -scaledHeight / 2,
+                scaledWidth,
+                scaledHeight
+            );
         }
 
         ctx.restore();
@@ -422,6 +442,10 @@ export default function BrushScreen() {
                 onBackgroundColorChange={setBackgroundColor}
                 isTransparent={isTransparent}
                 onTransparentChange={setIsTransparent}
+                imageWidthRatio={imageWidthRatio}
+                onImageWidthRatioChange={setImageWidthRatio}
+                imageHeightRatio={imageHeightRatio}
+                onImageHeightRatioChange={setImageHeightRatio}
             />
         </div>
     );

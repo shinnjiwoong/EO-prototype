@@ -20,6 +20,10 @@ interface ControlPanelProps {
     onBackgroundColorChange: (color: string) => void;
     isTransparent: boolean;
     onTransparentChange: (transparent: boolean) => void;
+    imageWidthRatio: number;
+    onImageWidthRatioChange: (value: number) => void;
+    imageHeightRatio: number;
+    onImageHeightRatioChange: (value: number) => void;
 }
 
 export default function ControlPanel({
@@ -40,6 +44,10 @@ export default function ControlPanel({
     onBackgroundColorChange,
     isTransparent,
     onTransparentChange,
+    imageWidthRatio,
+    onImageWidthRatioChange,
+    imageHeightRatio,
+    onImageHeightRatioChange,
 }: ControlPanelProps) {
     const updateSliderBackground = (element: HTMLInputElement) => {
         const min = parseFloat(element.min);
@@ -139,7 +147,7 @@ export default function ControlPanel({
                     <div className="flex items-center gap-2">
                         <input
                             type="range"
-                            min={10}
+                            min={1}
                             max={200}
                             value={drawInterval}
                             onChange={(e) =>
@@ -149,7 +157,7 @@ export default function ControlPanel({
                         />
                         <span className="text-black text-sm min-w-[3rem] text-right">
                             {Math.round(
-                                ((200 - drawInterval) / (200 - 10)) * 100
+                                ((200 - drawInterval) / (200 - 1)) * 100
                             )}
                             %
                         </span>
@@ -186,6 +194,44 @@ export default function ControlPanel({
                             className="w-full h-8 border border-black"
                         />
                     )}
+                </div>
+
+                <div className="flex flex-col gap-4 w-full">
+                    <label className="text-black">Image Width Ratio</label>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="range"
+                            min={50}
+                            max={200}
+                            value={imageWidthRatio}
+                            onChange={(e) =>
+                                onImageWidthRatioChange(+e.target.value)
+                            }
+                            className="flex-1 h-[1px] bg-black rounded-lg appearance-none cursor-pointer slider"
+                        />
+                        <span className="text-black text-sm min-w-[3rem] text-right">
+                            {imageWidthRatio}%
+                        </span>
+                    </div>
+                </div>
+
+                <div className="flex flex-col gap-4 w-full">
+                    <label className="text-black">Image Height Ratio</label>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="range"
+                            min={50}
+                            max={200}
+                            value={imageHeightRatio}
+                            onChange={(e) =>
+                                onImageHeightRatioChange(+e.target.value)
+                            }
+                            className="flex-1 h-[1px] bg-black rounded-lg appearance-none cursor-pointer slider"
+                        />
+                        <span className="text-right text-black text-sm min-w-[3rem]">
+                            {imageHeightRatio}%
+                        </span>
+                    </div>
                 </div>
             </div>
 
